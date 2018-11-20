@@ -29,6 +29,14 @@ function delayPromise(delay) {
 function makeRequest(opts) {
     return new Promise(function(resolve, reject) {
         request(opts, function(err, result, body) {
+            /**
+             * May not be required as it should be applied with the set-cookie
+             */
+            console.log(result);
+            const j = request.jar();
+            const cookie = request.cookie(result.headers['set-cookie']);
+            j.setCookie(cookie, 'url');
+
             if (err) {
                 return reject(err);
             } else {
@@ -215,6 +223,7 @@ export default class BOSHConnection extends WildEmitter {
         const ticket = { id: self.rid, request: null };
         bosh.rid = self.rid;
         bosh.sid = self.sid;
+        console.log(bosh.sid);
         const body = Buffer.from(bosh.toString(), 'utf8').toString();
         self.emit('raw:outgoing', body);
         self.emit('raw:outgoing:' + ticket.id, body);
@@ -227,7 +236,8 @@ export default class BOSHConnection extends WildEmitter {
                 strictSSL: true,
                 headers: {
                     'Content-Type': 'text/xml'
-                }
+                },
+                jar: true
             },
             self.config.wait * 1.5,
             this.config.maxRetries
